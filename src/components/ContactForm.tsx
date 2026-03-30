@@ -1,6 +1,7 @@
 import { useState, FormEvent } from 'react';
 import { Send, CheckCircle, AlertCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { sanitizeText, validateContactForm, ValidationErrors } from '../lib/validation';
 
 export default function ContactForm() {
   const [formData, setFormData] = useState({
@@ -12,19 +13,38 @@ export default function ContactForm() {
   });
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+
+    const errors = validateContactForm(formData);
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      setStatus('error');
+      setErrorMessage('Please fix the highlighted fields and submit again.');
+      return;
+    }
+
     setStatus('sending');
     setErrorMessage('');
+    setValidationErrors({});
+
+    const cleanData = {
+      name: sanitizeText(formData.name, 80),
+      email: sanitizeText(formData.email, 120),
+      phone: sanitizeText(formData.phone, 30),
+      company: sanitizeText(formData.company, 120),
+      message: sanitizeText(formData.message, 2000)
+    };
 
     try {
       const { error } = await supabase.from('contact_submissions').insert({
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone || null,
-        company: formData.company || null,
-        message: formData.message
+        name: cleanData.name,
+        email: cleanData.email,
+        phone: cleanData.phone || null,
+        company: cleanData.company || null,
+        message: cleanData.message
       });
 
       if (error) throw error;
@@ -35,7 +55,7 @@ export default function ContactForm() {
     } catch (error) {
       console.error('Error submitting contact form:', error);
       setStatus('error');
-      setErrorMessage('Failed to send message. Please try again.');
+      setErrorMessage('We could not send your message right now. Please try again in a moment.');
       setTimeout(() => setStatus('idle'), 5000);
     }
   };
@@ -45,13 +65,21 @@ export default function ContactForm() {
       ...formData,
       [e.target.name]: e.target.value,
     });
+
+    if (validationErrors[e.target.name]) {
+      setValidationErrors((prev) => {
+        const next = { ...prev };
+        delete next[e.target.name];
+        return next;
+      });
+    }
   };
 
   return (
     <div className="bg-white rounded-2xl shadow-2xl p-8 md:p-12 max-w-2xl mx-auto">
       <div className="text-center mb-8">
         <h3 className="text-3xl font-bold text-gray-900 mb-2">Get in Touch</h3>
-        <p className="text-gray-600">Fill out the form below and we'll get back to you within 24 hours</p>
+        <p className="text-gray-600">Fill out the form below, and we will get back to you within 24 hours.</p>
       </div>
 
       {status === 'success' && (
@@ -84,6 +112,7 @@ export default function ContactForm() {
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 group-hover:border-blue-300"
               placeholder="John Doe"
             />
+            {validationErrors.name && <p className="mt-2 text-sm text-red-600">{validationErrors.name}</p>}
           </div>
 
           <div className="group">
@@ -100,6 +129,7 @@ export default function ContactForm() {
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 group-hover:border-blue-300"
               placeholder="john@example.com"
             />
+            {validationErrors.email && <p className="mt-2 text-sm text-red-600">{validationErrors.email}</p>}
           </div>
         </div>
 
@@ -117,6 +147,7 @@ export default function ContactForm() {
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 group-hover:border-blue-300"
               placeholder="+1 (555) 123-4567"
             />
+            {validationErrors.phone && <p className="mt-2 text-sm text-red-600">{validationErrors.phone}</p>}
           </div>
 
           <div className="group">
@@ -132,6 +163,7 @@ export default function ContactForm() {
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 group-hover:border-blue-300"
               placeholder="Your Company"
             />
+            {validationErrors.company && <p className="mt-2 text-sm text-red-600">{validationErrors.company}</p>}
           </div>
         </div>
 
@@ -149,6 +181,7 @@ export default function ContactForm() {
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 group-hover:border-blue-300 resize-none"
             placeholder="Tell us about your business needs..."
           />
+          {validationErrors.message && <p className="mt-2 text-sm text-red-600">{validationErrors.message}</p>}
         </div>
 
         <button

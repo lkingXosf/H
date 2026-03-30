@@ -28,10 +28,13 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
   const [applications, setApplications] = useState<LLCApplication[]>([]);
   const [contacts, setContacts] = useState<ContactSubmission[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'applications' | 'contacts' | 'analytics'>('applications');
+  const [activeTab, setActiveTab] = useState<'applications' | 'contacts'>('applications');
   const [selectedApplication, setSelectedApplication] = useState<LLCApplication | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [fetchError, setFetchError] = useState('');
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [updateError, setUpdateError] = useState('');
 
   useEffect(() => {
     fetchData();
@@ -39,55 +42,62 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
 
   const fetchData = async () => {
     setLoading(true);
+    setFetchError('');
+
     try {
       const [applicationsResponse, contactsResponse] = await Promise.all([
-        supabase
-          .from('llc_applications')
-          .select('*')
-          .order('created_at', { ascending: false }),
-        supabase
-          .from('contact_submissions')
-          .select('*')
-          .order('created_at', { ascending: false })
+        supabase.from('llc_applications').select('*').order('created_at', { ascending: false }),
+        supabase.from('contact_submissions').select('*').order('created_at', { ascending: false })
       ]);
+
+      if (applicationsResponse.error || contactsResponse.error) {
+        throw applicationsResponse.error || contactsResponse.error;
+      }
 
       if (applicationsResponse.data) setApplications(applicationsResponse.data);
       if (contactsResponse.data) setContacts(contactsResponse.data);
     } catch (error) {
       console.error('Error fetching data:', error);
+      setFetchError('Failed to load dashboard data. Please refresh and try again.');
     } finally {
       setLoading(false);
     }
   };
 
   const updateApplicationStatus = async (id: string, status: string) => {
+    setUpdatingId(id);
+    setUpdateError('');
+
     try {
-      const { error } = await supabase
-        .from('llc_applications')
-        .update({ status })
-        .eq('id', id);
+      const { error } = await supabase.from('llc_applications').update({ status }).eq('id', id);
 
       if (error) throw error;
 
-      setApplications(prev =>
-        prev.map(app => app.id === id ? { ...app, status } : app)
-      );
+      setApplications((prev) => prev.map((app) => (app.id === id ? { ...app, status } : app)));
     } catch (error) {
       console.error('Error updating status:', error);
+      setUpdateError('Failed to update application status. Please try again.');
+    } finally {
+      setUpdatingId(null);
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'processing': return 'bg-blue-100 text-blue-800';
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'rejected': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'processing':
+        return 'bg-blue-100 text-blue-800';
+      case 'completed':
+        return 'bg-green-100 text-green-800';
+      case 'rejected':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const filteredApplications = applications.filter(app => {
+  const filteredApplications = applications.filter((app) => {
     const matchesSearch =
       app.company_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       app.owner_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -98,16 +108,17 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
     return matchesSearch && matchesStatus;
   });
 
-  const filteredContacts = contacts.filter(contact =>
-    contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    contact.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    contact.message.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredContacts = contacts.filter(
+    (contact) =>
+      contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      contact.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      contact.message.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const stats = {
     totalApplications: applications.length,
-    pendingApplications: applications.filter(a => a.status === 'pending').length,
-    completedApplications: applications.filter(a => a.status === 'completed').length,
+    pendingApplications: applications.filter((a) => a.status === 'pending').length,
+    completedApplications: applications.filter((a) => a.status === 'completed').length,
     totalContacts: contacts.length
   };
 
@@ -123,16 +134,23 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
             <span>Back to Dashboard</span>
           </button>
 
+          {updateError && (
+            <div className="mb-6 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
+              {updateError}
+            </div>
+          )}
+
           <div className="bg-white rounded-2xl shadow-xl p-8">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-3xl font-bold text-gray-900">Application Details</h2>
               <select
                 value={selectedApplication.status}
+                disabled={updatingId === selectedApplication.id}
                 onChange={(e) => {
                   updateApplicationStatus(selectedApplication.id, e.target.value);
                   setSelectedApplication({ ...selectedApplication, status: e.target.value });
                 }}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
               >
                 <option value="pending">Pending</option>
                 <option value="processing">Processing</option>
@@ -182,14 +200,27 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
           </button>
           <button
             onClick={fetchData}
-            className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            disabled={loading}
+            className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-60"
           >
-            <RefreshCw className="h-5 w-5" />
+            <RefreshCw className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} />
             <span>Refresh</span>
           </button>
         </div>
 
         <h1 className="text-4xl font-bold text-gray-900 mb-8">Admin Dashboard</h1>
+
+        {fetchError && (
+          <div className="mb-6 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
+            {fetchError}
+          </div>
+        )}
+
+        {updateError && (
+          <div className="mb-6 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
+            {updateError}
+          </div>
+        )}
 
         <div className="grid md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white p-6 rounded-2xl shadow-lg">
@@ -218,7 +249,7 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
 
           <div className="bg-white p-6 rounded-2xl shadow-lg">
             <div className="flex items-center justify-between mb-2">
-              <MessageSquare className="h-8 w-8 text-purple-600" />
+              <MessageSquare className="h-8 w-8 text-emerald-600" />
               <span className="text-3xl font-bold text-gray-900">{stats.totalContacts}</span>
             </div>
             <p className="text-gray-600">Contact Messages</p>
@@ -287,46 +318,26 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead>
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Company
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Owner
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Email
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Date
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
-                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Owner</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {filteredApplications.map((app) => (
                       <tr key={app.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {app.company_name}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                          {app.owner_name}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                          {app.email}
-                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{app.company_name}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{app.owner_name}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{app.email}</td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(app.status)}`}>
                             {app.status}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                          {new Date(app.created_at).toLocaleDateString()}
-                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{new Date(app.created_at).toLocaleDateString()}</td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <button
                             onClick={() => setSelectedApplication(app)}
@@ -350,9 +361,7 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
                         <h3 className="font-semibold text-gray-900">{contact.name}</h3>
                         <p className="text-sm text-gray-600">{contact.email}</p>
                       </div>
-                      <span className="text-xs text-gray-500">
-                        {new Date(contact.created_at).toLocaleString()}
-                      </span>
+                      <span className="text-xs text-gray-500">{new Date(contact.created_at).toLocaleString()}</span>
                     </div>
                     <p className="text-gray-700 mt-2">{contact.message}</p>
                   </div>

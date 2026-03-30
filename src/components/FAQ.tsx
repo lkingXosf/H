@@ -26,20 +26,44 @@ const faqs = [
     question: 'What ongoing compliance is required?',
     answer: 'Requirements vary by state but typically include an annual report and franchise tax. We provide ongoing compliance support to help you stay in good standing and never miss important deadlines.',
   },
+  {
+    question: 'How fast can I complete checkout?',
+    answer: 'Most founders complete the application in about 10 minutes. We designed the process to be simple: submit your details once, and our team takes over the legal filing workflow.',
+  },
+  {
+    question: 'Do you support single-member and multi-member LLCs?',
+    answer: 'Yes. We support both single-member and multi-member LLC structures and guide you on the best option for your growth plans and compliance preferences.',
+  },
+  {
+    question: 'Can you help if I already reserved a company name?',
+    answer: 'Absolutely. If you already reserved your name, we continue from that step and file the remaining documents. If not, we can guide you through name checks and availability.',
+  },
+  {
+    question: 'What happens after I submit the form?',
+    answer: 'You receive a confirmation, then our team reviews your details and starts filing. We keep you updated at each milestone until your formation package is complete.',
+  },
+  {
+    question: 'Can MYLLC help with international founders?',
+    answer: 'Yes. MYLLC is built for global founders and supports international onboarding with clear document guidance and practical next steps for US operations.',
+  },
+  {
+    question: 'Is there a refund policy?',
+    answer: 'Yes. If we cannot start your filing due to an internal issue, you are eligible for a full refund. Our team explains all policy details clearly before payment.',
+  },
 ];
 
 export default function FAQ() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   return (
-    <section className="py-24 bg-white">
+    <section className="py-24 bg-gradient-to-b from-emerald-50/40 to-white">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
             Frequently Asked Questions
           </h2>
           <p className="text-xl text-gray-600">
-            Everything you need to know about forming your US LLC
+            Clear answers to help you decide quickly and check out confidently
           </p>
         </div>
 
@@ -47,7 +71,7 @@ export default function FAQ() {
           {faqs.map((faq, index) => (
             <div
               key={index}
-              className="border border-gray-200 rounded-xl overflow-hidden hover:border-blue-300 transition-all duration-300 hover:shadow-md animate-fade-in-up"
+              className="border border-gray-200 rounded-xl overflow-hidden hover:border-emerald-300 transition-all duration-300 hover:shadow-md animate-fade-in-up"
               style={{ animationDelay: `${index * 50}ms` }}
             >
               <button
@@ -58,7 +82,7 @@ export default function FAQ() {
                   {faq.question}
                 </span>
                 <ChevronDown
-                  className={`h-5 w-5 text-blue-600 flex-shrink-0 transition-transform duration-300 ${
+                  className={`h-5 w-5 text-emerald-600 flex-shrink-0 transition-transform duration-300 ${
                     openIndex === index ? 'rotate-180' : ''
                   }`}
                 />
@@ -80,9 +104,9 @@ export default function FAQ() {
           <p className="text-gray-600 mb-4">Still have questions?</p>
           <a
             href="#contact"
-            className="inline-flex items-center text-blue-600 font-semibold hover:text-blue-700 transition-colors duration-300"
+            className="inline-flex items-center text-emerald-600 font-semibold hover:text-emerald-700 transition-colors duration-300"
           >
-            Contact our team
+            Talk to a MYLLC specialist
             <ChevronDown className="h-4 w-4 ml-2 rotate-[-90deg]" />
           </a>
         </div>

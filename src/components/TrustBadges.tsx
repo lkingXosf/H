@@ -25,7 +25,7 @@ const badges = [
 
 export default function TrustBadges() {
   return (
-    <div className="bg-blue-50 py-12">
+    <div className="bg-emerald-50 py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {badges.map((badge, index) => (
@@ -34,8 +34,8 @@ export default function TrustBadges() {
               className="flex flex-col items-center text-center group animate-fade-in-up"
               style={{ animationDelay: `${index * 100}ms` }}
             >
-              <div className="bg-white p-4 rounded-full mb-3 group-hover:bg-blue-600 transition-all duration-300 group-hover:scale-110 shadow-md">
-                <div className="text-blue-600 group-hover:text-white transition-colors duration-300">
+              <div className="bg-white p-4 rounded-full mb-3 group-hover:bg-emerald-600 transition-all duration-300 group-hover:scale-110 shadow-md">
+                <div className="text-emerald-600 group-hover:text-white transition-colors duration-300">
                   {badge.icon}
                 </div>
               </div>

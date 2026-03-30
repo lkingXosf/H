@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Space+Grotesk:wght@600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -122,8 +124,8 @@
   --text-primary: #111827;
   --text-secondary: #6b7280;
   --border-color: #e5e7eb;
-  --blue-600: #2563eb;
-  --blue-700: #1d4ed8;
+  --brand-600: #059669;
+  --brand-700: #047857;
 }
 
 .dark {
@@ -132,8 +134,8 @@
   --text-primary: #f9fafb;
   --text-secondary: #9ca3af;
   --border-color: #374151;
-  --blue-600: #3b82f6;
-  --blue-700: #2563eb;
+  --brand-600: #10b981;
+  --brand-700: #059669;
 }
 
 .somber {
@@ -142,6 +144,10 @@
   --text-primary: #e2e8f0;
   --text-secondary: #a0aec0;
   --border-color: #4a5568;
-  --blue-600: #4299e1;
-  --blue-700: #3182ce;
+  --brand-600: #34d399;
+  --brand-700: #10b981;
+}
+
+body {
+  font-family: 'Manrope', 'Segoe UI', sans-serif;
 }

@@ -6,7 +6,7 @@ const testimonials = [
     company: 'Tech Startup Inc.',
     country: 'United Kingdom',
     image: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=200',
-    text: 'OGS Solution made the entire process incredibly smooth. We had our LLC up and running in less than 48 hours. Highly recommended!',
+    text: 'MYLLC made the entire process incredibly smooth. We had our LLC up and running in less than 48 hours. Highly recommended!',
     rating: 5,
   },
   {
@@ -47,7 +47,7 @@ export default function Testimonials() {
               className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 group animate-fade-in-up"
               style={{ animationDelay: `${index * 150}ms` }}
             >
-              <Quote className="h-10 w-10 text-blue-200 mb-4 group-hover:text-blue-400 transition-colors duration-300" />
+              <Quote className="h-10 w-10 text-emerald-200 mb-4 group-hover:text-emerald-400 transition-colors duration-300" />
 
               <div className="flex mb-4">
                 {[...Array(testimonial.rating)].map((_, i) => (
@@ -66,7 +66,7 @@ export default function Testimonials() {
                 <img
                   src={testimonial.image}
                   alt={testimonial.name}
-                  className="w-12 h-12 rounded-full object-cover ring-2 ring-blue-100 group-hover:ring-blue-300 transition-all duration-300"
+                  className="w-12 h-12 rounded-full object-cover ring-2 ring-emerald-100 group-hover:ring-emerald-300 transition-all duration-300"
                 />
                 <div>
                   <div className="font-semibold text-gray-900">{testimonial.name}</div>

@@ -1,12 +1,112 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
-type Language = 'en' | 'fr';
+export type Language = 'en' | 'fr';
 
-interface Translations {
-  [key: string]: any;
+export interface ProcessStep {
+  title: string;
+  description: string;
 }
 
-const translations: Record<Language, Translations> = {
+export interface FormTranslations {
+  backToHome: string;
+  formTitle: string;
+  formSubtitle: string;
+  companyName: string;
+  companyNamePlaceholder: string;
+  ownerName: string;
+  ownerNamePlaceholder: string;
+  email: string;
+  emailPlaceholder: string;
+  phone: string;
+  phonePlaceholder: string;
+  address: string;
+  addressPlaceholder: string;
+  city: string;
+  cityPlaceholder: string;
+  state: string;
+  statePlaceholder: string;
+  zipCode: string;
+  zipCodePlaceholder: string;
+  country: string;
+  countryPlaceholder: string;
+  businessType: string;
+  selectOption: string;
+  ecommerce: string;
+  consulting: string;
+  technology: string;
+  realEstate: string;
+  other: string;
+  members: string;
+  ein: string;
+  bankAccount: string;
+  yes: string;
+  no: string;
+  additionalInfo: string;
+  additionalInfoPlaceholder: string;
+  submit: string;
+  submitting: string;
+  successMessage: string;
+  errorMessage: string;
+}
+
+export interface ChatTranslations {
+  title: string;
+  placeholder: string;
+  send: string;
+}
+
+interface AppTranslations {
+  nav: {
+    services: string;
+    benefits: string;
+    process: string;
+    contact: string;
+    getStarted: string;
+  };
+  hero: {
+    title: string;
+    subtitle: string;
+    description: string;
+    startButton: string;
+    learnMore: string;
+    stats: {
+      llcs: string;
+      countries: string;
+      time: string;
+      success: string;
+    };
+  };
+  services: {
+    title: string;
+    subtitle: string;
+    fast: { title: string; description: string };
+    compliant: { title: string; description: string };
+    global: { title: string; description: string };
+    package: { title: string; description: string };
+  };
+  benefits: {
+    title: string;
+    description: string;
+    items: string[];
+    price: string;
+    priceSubtitle: string;
+    features: string[];
+    cta: string;
+  };
+  process: {
+    title: string;
+    subtitle: string;
+    steps: ProcessStep[];
+  };
+  contact: {
+    title: string;
+    subtitle: string;
+  };
+  form: FormTranslations;
+  chat: ChatTranslations;
+}
+
+const translations: Record<Language, AppTranslations> = {
   en: {
     nav: {
       services: 'Services',
@@ -18,7 +118,7 @@ const translations: Record<Language, Translations> = {
     hero: {
       title: 'Launch Your US LLC',
       subtitle: 'in 48 Hours',
-      description: 'Fast, reliable, and hassle-free LLC formation for entrepreneurs worldwide. Start your American business today.',
+      description: 'Fast, reliable, and hassle-free LLC formation for founders worldwide. Launch your US business with MYLLC today.',
       startButton: 'Start Your LLC',
       learnMore: 'Learn More',
       stats: {
@@ -29,8 +129,8 @@ const translations: Record<Language, Translations> = {
       }
     },
     services: {
-      title: 'Why Choose OGS Solution?',
-      subtitle: 'We handle everything so you can focus on building your business',
+      title: 'Why Choose MYLLC?',
+      subtitle: 'We handle filing, compliance, and support so you can focus on growth',
       fast: {
         title: 'Lightning Fast',
         description: 'Complete LLC formation in just 48 hours with our streamlined process'
@@ -68,7 +168,7 @@ const translations: Record<Language, Translations> = {
         'Money-back guarantee',
         'Free 1-year registered agent'
       ],
-      cta: 'Get Started Now'
+      cta: 'Start Your Checkout'
     },
     process: {
       title: 'Simple 3-Step Process',
@@ -90,7 +190,7 @@ const translations: Record<Language, Translations> = {
     },
     contact: {
       title: 'Ready to Start Your US Business?',
-      subtitle: 'Fill out the form below and our team will contact you within 24 hours'
+      subtitle: 'Complete the quick form below and a MYLLC specialist will contact you within 24 hours'
     },
     form: {
       backToHome: 'Back to Home',
@@ -150,7 +250,7 @@ const translations: Record<Language, Translations> = {
     hero: {
       title: 'Lancez votre LLC aux États-Unis',
       subtitle: 'en 48 heures',
-      description: 'Formation de LLC rapide, fiable et sans tracas pour les entrepreneurs du monde entier. Démarrez votre entreprise américaine aujourd\'hui.',
+      description: 'Formation de LLC rapide, fiable et sans tracas pour les fondateurs du monde entier. Lancez votre entreprise américaine avec MYLLC dès aujourd\'hui.',
       startButton: 'Démarrer votre LLC',
       learnMore: 'En savoir plus',
       stats: {
@@ -161,8 +261,8 @@ const translations: Record<Language, Translations> = {
       }
     },
     services: {
-      title: 'Pourquoi choisir OGS Solution?',
-      subtitle: 'Nous gérons tout pour que vous puissiez vous concentrer sur votre entreprise',
+      title: 'Pourquoi choisir MYLLC?',
+      subtitle: 'Nous gérons les formalités et la conformité pour que vous puissiez vous concentrer sur votre croissance',
       fast: {
         title: 'Ultra rapide',
         description: 'Formation complète de LLC en seulement 48 heures avec notre processus simplifié'
@@ -276,7 +376,7 @@ const translations: Record<Language, Translations> = {
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
-  t: Translations;
+  t: AppTranslations;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);

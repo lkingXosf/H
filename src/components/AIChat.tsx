@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { MessageCircle, Send, X, Bot } from 'lucide-react';
+import { ChatTranslations, Language } from '../contexts/LanguageContext';
 
 interface Message {
   id: string;
@@ -9,17 +10,18 @@ interface Message {
 }
 
 interface AIChatProps {
-  translations: any;
+  translations: ChatTranslations;
+  language: Language;
 }
 
-export default function AIChat({ translations }: AIChatProps) {
+export default function AIChat({ translations, language }: AIChatProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const getWelcomeMessage = () => {
-    return translations.language === 'fr'
+    return language === 'fr'
       ? 'Bonjour! Je suis votre assistant IA. Comment puis-je vous aider avec la formation de votre LLC aujourd\'hui?'
       : 'Hello! I\'m your AI assistant. How can I help you with your LLC formation today?';
   };
@@ -34,15 +36,13 @@ export default function AIChat({ translations }: AIChatProps) {
   ]);
 
   useEffect(() => {
-    setMessages([
-      {
-        id: '1',
-        text: getWelcomeMessage(),
-        sender: 'bot',
-        timestamp: new Date()
+    setMessages((prev) => {
+      if (prev.length === 1 && prev[0].id === '1' && prev[0].sender === 'bot') {
+        return [{ ...prev[0], text: getWelcomeMessage() }];
       }
-    ]);
-  }, [translations.language]);
+      return prev;
+    });
+  }, [language]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -54,7 +54,7 @@ export default function AIChat({ translations }: AIChatProps) {
 
   const getAIResponse = (userMessage: string): string => {
     const lowerMessage = userMessage.toLowerCase();
-    const isFrench = translations.language === 'fr';
+    const isFrench = language === 'fr';
 
     if (lowerMessage.includes('price') || lowerMessage.includes('cost') || lowerMessage.includes('prix') || lowerMessage.includes('coût')) {
       return isFrench
@@ -147,7 +147,7 @@ export default function AIChat({ translations }: AIChatProps) {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 rounded-full shadow-2xl hover:shadow-blue-500/50 transition-all duration-300 hover:scale-110 z-50 group"
+          className="fixed bottom-6 right-6 bg-gradient-to-r from-emerald-600 to-amber-500 text-white p-4 rounded-full shadow-2xl hover:shadow-emerald-500/50 transition-all duration-300 hover:scale-110 z-50 group"
           aria-label="Open AI Chat"
         >
           <MessageCircle className="h-6 w-6 group-hover:animate-pulse" />
@@ -157,7 +157,7 @@ export default function AIChat({ translations }: AIChatProps) {
 
       {isOpen && (
         <div className="fixed bottom-6 right-6 w-96 h-[600px] bg-white dark:bg-gray-800 rounded-2xl shadow-2xl flex flex-col z-50 animate-slide-up border border-gray-200 dark:border-gray-700">
-          <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-700 text-white p-4 rounded-t-2xl flex items-center justify-between">
+          <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 text-white p-4 rounded-t-2xl flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <div className="relative">
                 <Bot className="h-6 w-6" />
@@ -186,7 +186,7 @@ export default function AIChat({ translations }: AIChatProps) {
                 <div
                   className={`max-w-[80%] p-3 rounded-2xl shadow-sm ${
                     message.sender === 'user'
-                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-br-none'
+                      ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-br-none'
                       : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 rounded-bl-none border border-gray-200 dark:border-gray-700'
                   }`}
                 >
@@ -226,7 +226,7 @@ export default function AIChat({ translations }: AIChatProps) {
               <button
                 onClick={handleSend}
                 disabled={!inputValue.trim()}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-3 rounded-full hover:shadow-lg hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white p-3 rounded-full hover:shadow-lg hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                 aria-label="Send message"
               >
                 <Send className="h-5 w-5" />

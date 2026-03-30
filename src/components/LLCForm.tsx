@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import { Building2, User, Mail, Phone, MapPin, ArrowLeft } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { FormTranslations } from '../contexts/LanguageContext';
+import { LLCFormData, ValidationErrors, sanitizeText, validateLLCForm } from '../lib/validation';
 
 interface LLCFormProps {
   onBack: () => void;
-  translations: any;
+  translations: FormTranslations;
 }
 
 export default function LLCForm({ onBack, translations }: LLCFormProps) {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<LLCFormData>({
     companyName: '',
     ownerName: '',
     email: '',
@@ -27,35 +29,73 @@ export default function LLCForm({ onBack, translations }: LLCFormProps) {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
+  const [submitError, setSubmitError] = useState('');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
     });
+
+    if (validationErrors[e.target.name]) {
+      setValidationErrors((prev) => {
+        const next = { ...prev };
+        delete next[e.target.name];
+        return next;
+      });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const errors = validateLLCForm(formData);
+
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      setSubmitStatus('error');
+      setSubmitError('Please correct the highlighted fields and try again.');
+      return;
+    }
+
     setIsSubmitting(true);
     setSubmitStatus('idle');
+    setValidationErrors({});
+    setSubmitError('');
+
+    const cleanData = {
+      companyName: sanitizeText(formData.companyName, 120),
+      ownerName: sanitizeText(formData.ownerName, 120),
+      email: sanitizeText(formData.email, 120),
+      phone: sanitizeText(formData.phone, 30),
+      address: sanitizeText(formData.address, 200),
+      city: sanitizeText(formData.city, 100),
+      state: sanitizeText(formData.state, 100),
+      zipCode: sanitizeText(formData.zipCode, 20),
+      country: sanitizeText(formData.country, 100),
+      businessType: formData.businessType,
+      members: formData.members,
+      ein: formData.ein,
+      bankAccount: formData.bankAccount,
+      additionalInfo: sanitizeText(formData.additionalInfo, 2000)
+    };
 
     try {
       const { error } = await supabase.from('llc_applications').insert({
-        company_name: formData.companyName,
-        owner_name: formData.ownerName,
-        email: formData.email,
-        phone: formData.phone,
-        address: formData.address,
-        city: formData.city,
-        state: formData.state,
-        zip_code: formData.zipCode,
-        country: formData.country,
-        business_type: formData.businessType,
-        members: formData.members,
-        ein_needed: formData.ein === 'yes',
-        bank_account_needed: formData.bankAccount === 'yes',
-        additional_info: formData.additionalInfo || null,
+        company_name: cleanData.companyName,
+        owner_name: cleanData.ownerName,
+        email: cleanData.email,
+        phone: cleanData.phone,
+        address: cleanData.address,
+        city: cleanData.city,
+        state: cleanData.state,
+        zip_code: cleanData.zipCode,
+        country: cleanData.country,
+        business_type: cleanData.businessType,
+        members: cleanData.members,
+        ein_needed: cleanData.ein === 'yes',
+        bank_account_needed: cleanData.bankAccount === 'yes',
+        additional_info: cleanData.additionalInfo || null,
         status: 'pending'
       });
 
@@ -81,6 +121,7 @@ export default function LLCForm({ onBack, translations }: LLCFormProps) {
     } catch (error) {
       console.error('Error submitting application:', error);
       setSubmitStatus('error');
+      setSubmitError('We could not submit your application right now. Please try again in a moment.');
     } finally {
       setIsSubmitting(false);
     }
@@ -127,6 +168,7 @@ export default function LLCForm({ onBack, translations }: LLCFormProps) {
                     placeholder={translations.companyNamePlaceholder}
                   />
                 </div>
+                {validationErrors.companyName && <p className="mt-2 text-sm text-red-600">{validationErrors.companyName}</p>}
               </div>
 
               <div>
@@ -146,6 +188,7 @@ export default function LLCForm({ onBack, translations }: LLCFormProps) {
                     placeholder={translations.ownerNamePlaceholder}
                   />
                 </div>
+                {validationErrors.ownerName && <p className="mt-2 text-sm text-red-600">{validationErrors.ownerName}</p>}
               </div>
 
               <div>
@@ -165,6 +208,7 @@ export default function LLCForm({ onBack, translations }: LLCFormProps) {
                     placeholder={translations.emailPlaceholder}
                   />
                 </div>
+                {validationErrors.email && <p className="mt-2 text-sm text-red-600">{validationErrors.email}</p>}
               </div>
 
               <div>
@@ -184,6 +228,7 @@ export default function LLCForm({ onBack, translations }: LLCFormProps) {
                     placeholder={translations.phonePlaceholder}
                   />
                 </div>
+                {validationErrors.phone && <p className="mt-2 text-sm text-red-600">{validationErrors.phone}</p>}
               </div>
             </div>
 
@@ -204,6 +249,7 @@ export default function LLCForm({ onBack, translations }: LLCFormProps) {
                   placeholder={translations.addressPlaceholder}
                 />
               </div>
+              {validationErrors.address && <p className="mt-2 text-sm text-red-600">{validationErrors.address}</p>}
             </div>
 
             <div className="grid md:grid-cols-3 gap-6">
@@ -221,6 +267,7 @@ export default function LLCForm({ onBack, translations }: LLCFormProps) {
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   placeholder={translations.cityPlaceholder}
                 />
+                {validationErrors.city && <p className="mt-2 text-sm text-red-600">{validationErrors.city}</p>}
               </div>
 
               <div>
@@ -237,6 +284,7 @@ export default function LLCForm({ onBack, translations }: LLCFormProps) {
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   placeholder={translations.statePlaceholder}
                 />
+                {validationErrors.state && <p className="mt-2 text-sm text-red-600">{validationErrors.state}</p>}
               </div>
 
               <div>
@@ -253,6 +301,7 @@ export default function LLCForm({ onBack, translations }: LLCFormProps) {
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   placeholder={translations.zipCodePlaceholder}
                 />
+                {validationErrors.zipCode && <p className="mt-2 text-sm text-red-600">{validationErrors.zipCode}</p>}
               </div>
             </div>
 
@@ -270,6 +319,7 @@ export default function LLCForm({ onBack, translations }: LLCFormProps) {
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 placeholder={translations.countryPlaceholder}
               />
+              {validationErrors.country && <p className="mt-2 text-sm text-red-600">{validationErrors.country}</p>}
             </div>
 
             <div className="grid md:grid-cols-2 gap-6">
@@ -292,6 +342,7 @@ export default function LLCForm({ onBack, translations }: LLCFormProps) {
                   <option value="real-estate">{translations.realEstate}</option>
                   <option value="other">{translations.other}</option>
                 </select>
+                {validationErrors.businessType && <p className="mt-2 text-sm text-red-600">{validationErrors.businessType}</p>}
               </div>
 
               <div>
@@ -374,7 +425,7 @@ export default function LLCForm({ onBack, translations }: LLCFormProps) {
 
             {submitStatus === 'error' && (
               <div className="bg-red-50 border border-red-200 text-red-800 px-6 py-4 rounded-lg">
-                {translations.errorMessage}
+                {submitError || translations.errorMessage}
               </div>
             )}
 

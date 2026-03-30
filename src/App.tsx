@@ -11,12 +11,14 @@ import Logo from './components/Logo';
 import ThemeSelector from './components/ThemeSelector';
 import { useTheme } from './contexts/ThemeContext';
 import { useLanguage } from './contexts/LanguageContext';
+import { ProcessStep } from './contexts/LanguageContext';
 
 function App() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showLLCForm, setShowLLCForm] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
+  const [adminError, setAdminError] = useState('');
   const { theme } = useTheme();
   const { language, setLanguage, t } = useLanguage();
 
@@ -31,12 +33,32 @@ function App() {
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.shiftKey && e.key === 'A') {
-        setShowAdmin(true);
+        const configuredPassword = import.meta.env.VITE_ADMIN_PASSWORD;
+
+        if (!configuredPassword) {
+          setAdminError('Admin access is not configured for this environment.');
+          return;
+        }
+
+        const enteredPassword = window.prompt('Enter admin password');
+
+        if (enteredPassword === configuredPassword) {
+          setAdminError('');
+          setShowAdmin(true);
+        } else {
+          setAdminError('Access denied. Invalid admin password.');
+        }
       }
     };
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, []);
+
+  useEffect(() => {
+    if (!adminError) return;
+    const timer = window.setTimeout(() => setAdminError(''), 5000);
+    return () => window.clearTimeout(timer);
+  }, [adminError]);
 
   const handleGetStarted = () => {
     setShowLLCForm(true);
@@ -57,6 +79,11 @@ function App() {
       theme === 'somber' ? 'somber bg-gray-800' :
       'bg-white'
     }`}>
+      {adminError && (
+        <div className="fixed top-0 left-0 right-0 z-[60] bg-red-600 text-white text-center py-2 px-4 text-sm font-medium">
+          {adminError}
+        </div>
+      )}
       <nav className={`fixed w-full z-50 transition-all duration-300 ${
         isScrolled
           ? theme === 'dark' ? 'bg-gray-800 shadow-lg' :
@@ -75,10 +102,10 @@ function App() {
                 <a
                   key={item}
                   href={`#${['services', 'benefits', 'process', 'contact'][index]}`}
-                  className={`relative transition-colors duration-300 hover:text-blue-600 after:content-[''] after:absolute after:w-0 after:h-0.5 after:bg-blue-600 after:left-0 after:-bottom-1 after:transition-all after:duration-300 hover:after:w-full ${
+                    className={`relative transition-colors duration-300 hover:text-emerald-600 after:content-[''] after:absolute after:w-0 after:h-0.5 after:bg-emerald-600 after:left-0 after:-bottom-1 after:transition-all after:duration-300 hover:after:w-full ${
                     isScrolled
                       ? theme === 'dark' || theme === 'somber' ? 'text-gray-300' : 'text-gray-700'
-                      : 'text-white after:bg-white hover:after:bg-blue-600'
+                      : 'text-white after:bg-white hover:after:bg-emerald-500'
                   }`}
                 >
                   {item}
@@ -93,6 +120,7 @@ function App() {
                     : 'hover:bg-white/20'
                 }`}
                 title={language === 'en' ? 'Français' : 'English'}
+                aria-label={language === 'en' ? 'Switch language to French' : 'Switch language to English'}
               >
                 <Languages className={`h-5 w-5 ${
                   isScrolled
@@ -105,7 +133,7 @@ function App() {
 
               <button
                 onClick={handleGetStarted}
-                className="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/50 hover:scale-105 active:scale-95"
+                className="bg-emerald-600 text-white px-6 py-2 rounded-full hover:bg-emerald-700 transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/50 hover:scale-105 active:scale-95"
               >
                 {t.nav.getStarted}
               </button>
@@ -114,6 +142,7 @@ function App() {
             <button
               className="md:hidden"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
             >
               {mobileMenuOpen ? (
                 <X className={isScrolled ? theme === 'dark' || theme === 'somber' ? 'text-white' : 'text-gray-900' : 'text-white'} />
@@ -136,7 +165,7 @@ function App() {
                   key={item}
                   href={`#${['services', 'benefits', 'process', 'contact'][index]}`}
                   className={`block transition-colors ${
-                    theme === 'dark' || theme === 'somber' ? 'text-gray-300 hover:text-blue-400' : 'text-gray-700 hover:text-blue-600'
+                    theme === 'dark' || theme === 'somber' ? 'text-gray-300 hover:text-emerald-400' : 'text-gray-700 hover:text-emerald-600'
                   }`}
                   onClick={() => setMobileMenuOpen(false)}
                 >
@@ -149,6 +178,7 @@ function App() {
                   className={`p-2 rounded-full ${
                     theme === 'dark' || theme === 'somber' ? 'hover:bg-gray-700 text-gray-300' : 'hover:bg-gray-100 text-gray-700'
                   }`}
+                  aria-label={language === 'en' ? 'Switch language to French' : 'Switch language to English'}
                 >
                   <Languages className="h-5 w-5" />
                 </button>
@@ -156,7 +186,7 @@ function App() {
               </div>
               <button
                 onClick={handleGetStarted}
-                className="w-full bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition-all"
+                className="w-full bg-emerald-600 text-white px-6 py-2 rounded-full hover:bg-emerald-700 transition-all"
               >
                 {t.nav.getStarted}
               </button>
@@ -165,39 +195,39 @@ function App() {
         )}
       </nav>
 
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-blue-600 via-purple-600 to-blue-900">
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-emerald-700 via-teal-700 to-emerald-900">
         <div className="absolute inset-0">
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDM0djItaDJjMC0yLjIxLTEuNzktNC00LTRzLTQgMS43OS00IDR2MmgtMnYtMmMwLTMuMzEgMi42OS02IDYtNnM2IDIuNjkgNiA2ek0wIDM0djItaDJ2LTJoLTJ6bTI4IDB2Mmgydi0yaC0yem0tMTQgMHYyaDJ2LTJoLTJ6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-20"></div>
-          <div className="absolute top-20 left-10 w-96 h-96 bg-purple-400 rounded-full mix-blend-overlay filter blur-3xl opacity-20 animate-blob"></div>
-          <div className="absolute top-40 right-10 w-96 h-96 bg-blue-300 rounded-full mix-blend-overlay filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
-          <div className="absolute bottom-20 left-1/3 w-96 h-96 bg-blue-400 rounded-full mix-blend-overlay filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
-          <div className="absolute inset-0 bg-gradient-to-t from-blue-900/50 to-transparent"></div>
+          <div className="absolute top-20 left-10 w-96 h-96 bg-amber-300 rounded-full mix-blend-overlay filter blur-3xl opacity-20 animate-blob"></div>
+          <div className="absolute top-40 right-10 w-96 h-96 bg-teal-300 rounded-full mix-blend-overlay filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+          <div className="absolute bottom-20 left-1/3 w-96 h-96 bg-emerald-400 rounded-full mix-blend-overlay filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-emerald-900/50 to-transparent"></div>
         </div>
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32 text-center">
           <div className="inline-block mb-6 px-6 py-2 bg-white/10 backdrop-blur-lg rounded-full border border-white/20 animate-fade-in">
-            <span className="text-sm font-semibold text-white">🚀 #1 LLC Formation Service</span>
+            <span className="text-sm font-semibold text-white">MYLLC | Fast founder checkout in 10 minutes</span>
           </div>
           <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-white mb-6 animate-fade-in-up tracking-tight">
             {t.hero.title}
             <br />
-            <span className="bg-gradient-to-r from-blue-200 via-purple-200 to-blue-300 bg-clip-text text-transparent">{t.hero.subtitle}</span>
+            <span className="bg-gradient-to-r from-emerald-100 via-amber-100 to-emerald-200 bg-clip-text text-transparent">{t.hero.subtitle}</span>
           </h1>
-          <p className="text-xl md:text-2xl text-blue-100 mb-12 max-w-3xl mx-auto animate-fade-in-up animation-delay-200 leading-relaxed">
+          <p className="text-xl md:text-2xl text-emerald-100 mb-12 max-w-3xl mx-auto animate-fade-in-up animation-delay-200 leading-relaxed">
             {t.hero.description}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up animation-delay-400">
             <button
               onClick={handleGetStarted}
-              className="relative bg-white text-blue-600 px-10 py-5 rounded-full text-lg font-bold hover:shadow-2xl transition-all duration-300 hover:scale-105 active:scale-95 flex items-center justify-center space-x-2 group overflow-hidden"
+              className="relative bg-white text-emerald-700 px-10 py-5 rounded-full text-lg font-bold hover:shadow-2xl transition-all duration-300 hover:scale-105 active:scale-95 flex items-center justify-center space-x-2 group overflow-hidden"
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 to-amber-500 opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
               <span className="relative z-10">{t.hero.startButton}</span>
               <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform duration-300 relative z-10" />
             </button>
             <a
               href="#services"
-              className="relative border-2 border-white/50 backdrop-blur-sm bg-white/5 text-white px-10 py-5 rounded-full text-lg font-bold hover:bg-white hover:text-blue-600 transition-all duration-300 hover:scale-105 active:scale-95 hover:border-white group"
+              className="relative border-2 border-white/50 backdrop-blur-sm bg-white/5 text-white px-10 py-5 rounded-full text-lg font-bold hover:bg-white hover:text-emerald-700 transition-all duration-300 hover:scale-105 active:scale-95 hover:border-white group"
             >
               <span className="relative z-10">{t.hero.learnMore}</span>
             </a>
@@ -209,13 +239,13 @@ function App() {
               { number: '150+', label: t.hero.stats.countries },
               { number: '48h', label: t.hero.stats.time },
               { number: '99%', label: t.hero.stats.success }
-            ].map((stat, index) => (
+              ].map((stat) => (
               <div key={stat.label} className="relative group">
                 <div className="absolute inset-0 bg-white/5 backdrop-blur-lg rounded-2xl transform group-hover:scale-105 transition-transform duration-300"></div>
                 <div className="relative p-6 rounded-2xl border border-white/10 backdrop-blur-sm">
-                  <div className="text-5xl md:text-6xl font-black mb-2 bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">{stat.number}</div>
-                  <div className="text-blue-200 text-sm md:text-base font-semibold">{stat.label}</div>
-                  <div className="absolute top-4 right-4 w-2 h-2 bg-purple-400 rounded-full animate-pulse"></div>
+                  <div className="text-5xl md:text-6xl font-black mb-2 bg-gradient-to-r from-white to-emerald-200 bg-clip-text text-transparent">{stat.number}</div>
+                  <div className="text-emerald-200 text-sm md:text-base font-semibold">{stat.label}</div>
+                  <div className="absolute top-4 right-4 w-2 h-2 bg-amber-300 rounded-full animate-pulse"></div>
                 </div>
               </div>
             ))}
@@ -240,13 +270,13 @@ function App() {
                 icon: <Zap className="h-12 w-12" />,
                 title: t.services.fast.title,
                 description: t.services.fast.description,
-                gradient: 'from-blue-500 to-cyan-500'
+                gradient: 'from-emerald-500 to-teal-500'
               },
               {
                 icon: <Shield className="h-12 w-12" />,
                 title: t.services.compliant.title,
                 description: t.services.compliant.description,
-                gradient: 'from-purple-500 to-pink-500'
+                gradient: 'from-emerald-500 to-teal-500'
               },
               {
                 icon: <Globe className="h-12 w-12" />,
@@ -313,11 +343,11 @@ function App() {
             </div>
 
             <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-blue-600 rounded-3xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity duration-300"></div>
-              <div className="relative bg-gradient-to-br from-blue-500 to-blue-700 rounded-3xl p-12 text-white shadow-2xl transform hover:scale-105 transition-all duration-300 group">
+              <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-3xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity duration-300"></div>
+              <div className="relative bg-gradient-to-br from-emerald-600 to-teal-700 rounded-3xl p-12 text-white shadow-2xl transform hover:scale-105 transition-all duration-300 group">
                 <div className="text-center">
                   <div className="text-5xl font-bold mb-2 group-hover:scale-110 transition-transform duration-300">{t.benefits.price}</div>
-                  <div className="text-blue-200 mb-8">{t.benefits.priceSubtitle}</div>
+                  <div className="text-emerald-100 mb-8">{t.benefits.priceSubtitle}</div>
                   <div className="space-y-4 mb-8 text-left">
                     {t.benefits.features.map((feature: string) => (
                       <div key={feature} className="flex items-center space-x-2 hover:translate-x-2 transition-transform duration-300">
@@ -328,7 +358,7 @@ function App() {
                   </div>
                   <button
                     onClick={handleGetStarted}
-                    className="block w-full bg-white text-blue-600 px-8 py-4 rounded-full text-lg font-semibold hover:shadow-xl transition-all duration-300 hover:scale-105 active:scale-95"
+                    className="block w-full bg-white text-emerald-700 px-8 py-4 rounded-full text-lg font-semibold hover:shadow-xl transition-all duration-300 hover:scale-105 active:scale-95"
                   >
                     {t.benefits.cta}
                   </button>
@@ -351,7 +381,7 @@ function App() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            {t.process.steps.map((step: any, index: number) => (
+            {t.process.steps.map((step: ProcessStep, index: number) => (
               <div
                 key={index}
                 className={`relative p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 animate-fade-in-up group cursor-pointer overflow-hidden ${
@@ -359,11 +389,11 @@ function App() {
                 }`}
                 style={{ animationDelay: `${index * 150}ms` }}
               >
-                <div className="absolute top-0 right-0 w-20 h-20 bg-blue-50 rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <div className={`text-6xl font-bold mb-4 group-hover:text-blue-200 transition-colors duration-300 ${
-                  theme === 'dark' || theme === 'somber' ? 'text-gray-600' : 'text-blue-100'
+                <div className="absolute top-0 right-0 w-20 h-20 bg-emerald-50 rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className={`text-6xl font-bold mb-4 group-hover:text-emerald-200 transition-colors duration-300 ${
+                  theme === 'dark' || theme === 'somber' ? 'text-gray-600' : 'text-emerald-100'
                 }`}>0{index + 1}</div>
-                <h3 className={`text-2xl font-bold mb-3 group-hover:text-blue-600 transition-colors duration-300 ${
+                <h3 className={`text-2xl font-bold mb-3 group-hover:text-emerald-600 transition-colors duration-300 ${
                   theme === 'dark' || theme === 'somber' ? 'text-white' : 'text-gray-900'
                 }`}>{step.title}</h3>
                 <p className={theme === 'dark' || theme === 'somber' ? 'text-gray-300' : 'text-gray-600'}>{step.description}</p>
@@ -379,13 +409,47 @@ function App() {
 
       <FAQ />
 
-      <section id="contact" className="py-24 bg-gradient-to-br from-blue-600 to-blue-800">
+      <section className="py-16 bg-white">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="rounded-3xl border border-emerald-100 bg-gradient-to-r from-emerald-50 to-amber-50 p-8 md:p-12 shadow-lg">
+            <div className="grid md:grid-cols-2 gap-8 items-center">
+              <div>
+                <h3 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">Easy Founder Checkout</h3>
+                <p className="text-gray-700 text-lg mb-6">
+                  MYLLC keeps the checkout process simple: one clear form, transparent pricing, and a guided team review. No hidden steps.
+                </p>
+                <ul className="space-y-3 text-gray-700">
+                  <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-emerald-600" /> 10-minute application flow</li>
+                  <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-emerald-600" /> Instant submission confirmation</li>
+                  <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-emerald-600" /> Human support for edge cases</li>
+                </ul>
+              </div>
+              <div className="bg-white rounded-2xl p-6 shadow-md border border-emerald-100">
+                <h4 className="text-xl font-bold text-gray-900 mb-3">Checkout Summary</h4>
+                <div className="space-y-2 text-gray-700 mb-6">
+                  <p className="flex justify-between"><span>Formation package</span><span className="font-semibold">$499</span></p>
+                  <p className="flex justify-between"><span>Estimated completion</span><span className="font-semibold">48 hours</span></p>
+                  <p className="flex justify-between"><span>Support access</span><span className="font-semibold">24/7</span></p>
+                </div>
+                <button
+                  onClick={handleGetStarted}
+                  className="w-full bg-emerald-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-emerald-700 transition-colors"
+                >
+                  Continue to Application
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="contact" className="py-24 bg-gradient-to-br from-emerald-700 to-teal-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center text-white mb-12">
             <h2 className="text-4xl md:text-5xl font-bold mb-4">
               {t.contact.title}
             </h2>
-            <p className="text-xl text-blue-100">
+            <p className="text-xl text-emerald-100">
               {t.contact.subtitle}
             </p>
           </div>
@@ -399,45 +463,45 @@ function App() {
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div>
               <div className="flex items-center space-x-2 mb-4">
-                <Building2 className="h-6 w-6 text-blue-500" />
-                <span className="text-white font-bold text-lg">OGS Solution</span>
+                <Building2 className="h-6 w-6 text-emerald-400" />
+                <span className="text-white font-bold text-lg">MYLLC</span>
               </div>
-              <p className="text-sm">Your trusted partner for US LLC formation worldwide.</p>
+              <p className="text-sm">Your trusted partner for fast, compliant US LLC formation worldwide.</p>
             </div>
             <div>
               <h4 className="text-white font-semibold mb-4">{t.nav.services}</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-white hover:translate-x-1 transition-all duration-300 inline-block">LLC Formation</a></li>
-                <li><a href="#" className="hover:text-white hover:translate-x-1 transition-all duration-300 inline-block">EIN Application</a></li>
-                <li><a href="#" className="hover:text-white hover:translate-x-1 transition-all duration-300 inline-block">Registered Agent</a></li>
-                <li><a href="#" className="hover:text-white hover:translate-x-1 transition-all duration-300 inline-block">Bank Account</a></li>
+                <li><a href="#services" className="hover:text-white hover:translate-x-1 transition-all duration-300 inline-block">LLC Formation</a></li>
+                <li><a href="#services" className="hover:text-white hover:translate-x-1 transition-all duration-300 inline-block">EIN Application</a></li>
+                <li><a href="#services" className="hover:text-white hover:translate-x-1 transition-all duration-300 inline-block">Registered Agent</a></li>
+                <li><a href="#services" className="hover:text-white hover:translate-x-1 transition-all duration-300 inline-block">Bank Account</a></li>
               </ul>
             </div>
             <div>
               <h4 className="text-white font-semibold mb-4">Company</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-white hover:translate-x-1 transition-all duration-300 inline-block">About Us</a></li>
-                <li><a href="#" className="hover:text-white hover:translate-x-1 transition-all duration-300 inline-block">FAQ</a></li>
-                <li><a href="#" className="hover:text-white hover:translate-x-1 transition-all duration-300 inline-block">Blog</a></li>
+                <li><a href="#benefits" className="hover:text-white hover:translate-x-1 transition-all duration-300 inline-block">About Us</a></li>
+                <li><a href="#process" className="hover:text-white hover:translate-x-1 transition-all duration-300 inline-block">FAQ</a></li>
+                <li><a href="#contact" className="hover:text-white hover:translate-x-1 transition-all duration-300 inline-block">Blog</a></li>
                 <li><a href="#contact" className="hover:text-white hover:translate-x-1 transition-all duration-300 inline-block">{t.nav.contact}</a></li>
               </ul>
             </div>
             <div>
               <h4 className="text-white font-semibold mb-4">Legal</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-white hover:translate-x-1 transition-all duration-300 inline-block">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-white hover:translate-x-1 transition-all duration-300 inline-block">Terms of Service</a></li>
-                <li><a href="#" className="hover:text-white hover:translate-x-1 transition-all duration-300 inline-block">Refund Policy</a></li>
+                <li><a href="#contact" className="hover:text-white hover:translate-x-1 transition-all duration-300 inline-block">Privacy Policy</a></li>
+                <li><a href="#contact" className="hover:text-white hover:translate-x-1 transition-all duration-300 inline-block">Terms of Service</a></li>
+                <li><a href="#contact" className="hover:text-white hover:translate-x-1 transition-all duration-300 inline-block">Refund Policy</a></li>
               </ul>
             </div>
           </div>
           <div className={`border-t pt-8 text-center text-sm ${theme === 'dark' ? 'border-gray-800' : 'border-gray-800'}`}>
-            <p>&copy; 2025 OGS Solution. All rights reserved.</p>
+            <p>&copy; 2026 MYLLC. All rights reserved.</p>
           </div>
         </div>
       </footer>
 
-      <AIChat translations={{ ...t.chat, language }} />
+      <AIChat translations={t.chat} language={language} />
 
       <a
         href="https://wa.me/212691181002"

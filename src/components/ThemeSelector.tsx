@@ -28,6 +28,9 @@ export default function ThemeSelector({ isScrolled }: ThemeSelectorProps) {
             ? theme === 'dark' || theme === 'somber' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
             : 'hover:bg-white/20'
         }`}
+        aria-label="Select theme"
+        aria-haspopup="menu"
+        aria-expanded={isOpen}
       >
         <CurrentIcon className={`h-5 w-5 ${
           isScrolled
@@ -57,6 +60,7 @@ export default function ThemeSelector({ isScrolled }: ThemeSelectorProps) {
                     setTheme(t.id);
                     setIsOpen(false);
                   }}
+                  aria-label={`Switch to ${t.name.toLowerCase()} theme`}
                   className={`w-full px-4 py-3 flex items-center space-x-3 transition-colors ${
                     isActive
                       ? 'bg-blue-500 text-white'
