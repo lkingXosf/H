@@ -3,11 +3,27 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
+const missingSupabaseConfigMessage =
+  'Missing Supabase environment variables: VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY';
+
+const createUnavailableClient = () => {
+  const throwConfigError = () => {
+    throw new Error(missingSupabaseConfigMessage);
+  };
+
+  return {
+    from: throwConfigError,
+  } as unknown as ReturnType<typeof createClient>;
+};
+
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables: VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY');
+  console.warn(missingSupabaseConfigMessage);
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase =
+  supabaseUrl && supabaseAnonKey
+    ? createClient(supabaseUrl, supabaseAnonKey)
+    : createUnavailableClient();
 
 export interface LLCApplication {
   id?: string;
